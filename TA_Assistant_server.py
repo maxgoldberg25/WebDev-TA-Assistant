@@ -3,6 +3,13 @@ import subprocess
 import webbrowser
 import time
 import openai
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+#* Access keys from the .env file
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
 def setup_venv(venv_path):
@@ -35,28 +42,11 @@ def execute_readme(readme_path, openai_api_key):
     with open(readme_path, 'r') as file:
         readme_content = file.readlines()
     
-    print("README file loaded. Parsing instructions...")
-    
-    for line in readme_content:
-        line = line.strip()
-        if not line or line.startswith("#"):  # Skip empty lines and comments
-            continue
-        
-        print(f"Processing step: {line}")
-        
-        # If the line is a shell command
-        if line.startswith("python") or line.startswith("pip") or line.startswith("cd"):
-            try:
-                subprocess.run(line, shell=True, check=True)
-                print(f"Successfully executed: {line}")
-            except subprocess.CalledProcessError as e:
-                print(f"Error executing command: {line}\n{e}")
-        
-        # If the line requires explanation or is unclear
-        else:
-            print(f"Unclear instruction: {line}")
-            response = get_openai_guidance(line, openai_api_key)
-            print(f"OpenAI's guidance: {response}")
+    print("README file loaded. Sending full content to OpenAI API for guidance...")
+
+    response = get_openai_guidance(readme_content, openai_api_key)
+    print("OpenAI's guidance on the README:\n")
+    print(response)
 
 
 def get_openai_guidance(instruction, api_key):
@@ -70,58 +60,71 @@ def get_openai_guidance(instruction, api_key):
     Returns:
         str: Explanation or guidance from OpenAI.
     """
-    openai.api_key = api_key
+    client = openai.OpenAI(
+    api_key=api_key,
+    )
+
+    prompt=(f"Explain or provide clarification for the following instruction:\n\n{instruction}")
+
     try:
-        response = openai.Completion.create(
-            model="gpt-4o-mini",
-            prompt=f"Explain or provide clarification for the following instruction:\n\n{instruction}",
+        completion = client.chat.completions.create(
+        model="gpt-4o-mini",  # GPT-4 Turbo model
+        messages=[
+            {"role": "system", "content": "You are a TA for a webdev class. Students include instructions on how to run the code in the readme, sometimes they are not clear so you are in charge of determining what is meant in the readme. All you need to output is the exact command line instructions to run the code. An example would be 'python3 app.py'"},
+            {"role": "user", "content": prompt}
+        ],    
             max_tokens=150
         )
-        return response.choices[0].text.strip()
+        return completion.choices[0].message.content
     except Exception as e:
         return f"Error communicating with OpenAI API: {e}"
 
 def install_dependencies(requirements_file, venv_python):
     """Install dependencies using pip in the venv."""
-    if os.path.exists(requirements_file):
-        print(f"Installing dependencies from {requirements_file}...")
-        subprocess.run([venv_python, "-m", "pip", "install", "-r", requirements_file])
-    else:
-        print("No requirements.txt found. Skipping dependency installation.")
+    # Check for both uppercase and lowercase variations
+    if not os.path.exists(requirements_file):
+        alt_requirements_file = requirements_file.replace("requirements.txt", "Requirements.txt")
+        if os.path.exists("Requirements.txt"):
+            requirements_file = alt_requirements_file
+        else:
+            print("No requirements.txt or Requirements.txt found. Skipping dependency installation.")
+            return
 
-def run_files_with_venv(directory, venv_python, port=3000):
-    """Run Python files using the virtual environment."""
-    python_files = [f for f in os.listdir(directory) if f.endswith('.py')]
+    print(f"Installing dependencies from {requirements_file}...")
+    subprocess.run([venv_python, "-m", "pip", "install", "-r", requirements_file])
 
-    if not python_files:
-        print("No Python files found in the specified directory.")
-        return
 
-    for python_file in python_files:
-        file_path = os.path.join(directory, python_file)
-        print(f"Running: {python_file}")
+def run_files_with_venv(project_dir, venv_python):
+    """Run Flask files in the project directory."""
+    flask_files = [f for f in os.listdir(project_dir) if os.path.isdir(os.path.join(project_dir, f)) or f.endswith(".py")]
+
+    for flask_file in flask_files:
+        file_path = os.path.join(project_dir, flask_file)
+
+        if os.path.isdir(file_path):
+            print(f"Running Flask app from folder: {flask_file}")
+            command = [venv_python, "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
+        else:
+            print(f"Running Flask app: {flask_file}")
+            command = [venv_python, file_path]
 
         try:
-            # Start the Python file with the venv Python interpreter
-            process = subprocess.Popen(
-                [venv_python, file_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            time.sleep(3)  # Wait for the server to start
+            env = os.environ.copy()
+            env["FLASK_APP"] = file_path if not os.path.isdir(file_path) else flask_file
+            env["FLASK_ENV"] = "development"
+            env["FLASK_RUN_HOST"] = "0.0.0.0"
+            env["FLASK_RUN_PORT"] = "5000"
 
-            # Open the local link in the web browser
-            local_url = f"http://localhost:{port}"
-            webbrowser.open(local_url)
-            print(f"Opened {local_url} for {python_file}")
+            process = subprocess.Popen(command, cwd=project_dir, env=env)
+            print(f"Started Flask app: {flask_file} on http://127.0.0.1:5000")
 
-            # Wait for user input to proceed
-            input("Press Enter to stop the server and proceed to the next file...")
-        
-        finally:
-            # Terminate the server process
+            # Open the correct link in the browser
+            webbrowser.open("http://127.0.0.1:5000")
+
+            input("Press Enter to stop the app and proceed to the next...")
             process.terminate()
-            print(f"Stopped server for {python_file}")
-
-    print("All files have been processed.")
+        except Exception as e:
+            print(f"Error running Flask app {flask_file}: {e}")
 
 
 def find_readme(project_dir):
@@ -132,11 +135,11 @@ def find_readme(project_dir):
             return os.path.join(project_dir, readme_file)
     return None
 
-# Main execution logic
 if __name__ == "__main__":
     project_dir = input("Enter the path to the project directory: ").strip()
     venv_dir = os.path.join(project_dir, "venv")
-    requirements_path = os.path.join(project_dir, "requirements.txt")
+    requirements_path = os.path.join(project_dir, "Requirements.txt")
+    print(f"Project directory: {project_dir}")
     venv_python = os.path.join(venv_dir, "Scripts", "python") if os.name == "nt" else os.path.join(venv_dir, "bin", "python")
 
     if os.path.isdir(project_dir):
@@ -147,7 +150,7 @@ if __name__ == "__main__":
             readme_path = find_readme(project_dir)
             if readme_path:
                 print(f"Found README file at: {readme_path}")
-                openai_api_key = input("Enter your OpenAI API key: ").strip()
+                openai_api_key = OPENAI_API_KEY
                 execute_readme(readme_path, openai_api_key)
             else:
                 print("No README file found in the project directory.")
@@ -157,3 +160,4 @@ if __name__ == "__main__":
             print(f"Error: {e}")
     else:
         print("The specified path is not a valid directory.")
+
