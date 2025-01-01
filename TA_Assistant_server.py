@@ -25,59 +25,59 @@ def setup_venv(venv_path):
         raise FileNotFoundError("Activation script not found. Check the venv setup.")
     return activate_script
 
-def execute_readme(readme_path, openai_api_key): 
-    """
-    Executes steps from a README.txt file and provides assistance via OpenAI API.
+# def execute_readme(readme_path, openai_api_key): 
+#     """
+#     Executes steps from a README.txt file and provides assistance via OpenAI API.
     
-    Args:
-        readme_path (str): Path to the README.txt file.
-        openai_api_key (str): OpenAI API key for guidance on steps.
-    """
-    # Check if the README file exists
-    if not os.path.isfile(readme_path):
-        print(f"README file not found at: {readme_path}")
-        return
+#     Args:
+#         readme_path (str): Path to the README.txt file.
+#         openai_api_key (str): OpenAI API key for guidance on steps.
+#     """
+#     # Check if the README file exists
+#     if not os.path.isfile(readme_path):
+#         print(f"README file not found at: {readme_path}")
+#         return
     
-    # Read the README file
-    with open(readme_path, 'r') as file:
-        readme_content = file.readlines()
+#     # Read the README file
+#     with open(readme_path, 'r') as file:
+#         readme_content = file.readlines()
     
-    print("README file loaded. Sending full content to OpenAI API for guidance...")
+#     print("README file loaded. Sending full content to OpenAI API for guidance...")
 
-    response = get_openai_guidance(readme_content, openai_api_key)
-    print("OpenAI's guidance on the README:\n")
-    print(response)
+#     response = get_openai_guidance(readme_content, openai_api_key)
+#     print("OpenAI's guidance on the README:\n")
+#     print(response)
 
 
-def get_openai_guidance(instruction, api_key):
-    """
-    Gets guidance from OpenAI API for an unclear instruction.
+# def get_openai_guidance(instruction, api_key):
+#     """
+#     Gets guidance from OpenAI API for an unclear instruction.
     
-    Args:
-        instruction (str): The unclear instruction from the README file.
-        api_key (str): OpenAI API key.
+#     Args:
+#         instruction (str): The unclear instruction from the README file.
+#         api_key (str): OpenAI API key.
     
-    Returns:
-        str: Explanation or guidance from OpenAI.
-    """
-    client = openai.OpenAI(
-    api_key=api_key,
-    )
+#     Returns:
+#         str: Explanation or guidance from OpenAI.
+#     """
+#     client = openai.OpenAI(
+#     api_key=api_key,
+#     )
 
-    prompt=(f"Explain or provide clarification for the following instruction:\n\n{instruction}")
+#     prompt=(f"Explain or provide clarification for the following instruction:\n\n{instruction}")
 
-    try:
-        completion = client.chat.completions.create(
-        model="gpt-4o-mini",  # GPT-4 Turbo model
-        messages=[
-            {"role": "system", "content": "You are a TA for a webdev class. Students include instructions on how to run the code in the readme, sometimes they are not clear so you are in charge of determining what is meant in the readme. All you need to output is the exact command line instructions to run the code. An example would be 'python3 app.py'"},
-            {"role": "user", "content": prompt}
-        ],    
-            max_tokens=150
-        )
-        return completion.choices[0].message.content
-    except Exception as e:
-        return f"Error communicating with OpenAI API: {e}"
+#     try:
+#         completion = client.chat.completions.create(
+#         model="gpt-4o-mini",  # GPT-4 Turbo model
+#         messages=[
+#             {"role": "system", "content": "You are a TA for a webdev class. Students include instructions on how to run the code in the readme, sometimes they are not clear so you are in charge of determining what is meant in the readme. All you need to output is the exact command line instructions to run the code. An example would be 'python3 app.py'"},
+#             {"role": "user", "content": prompt}
+#         ],    
+#             max_tokens=150
+#         )
+#         return completion.choices[0].message.content
+#     except Exception as e:
+#         return f"Error communicating with OpenAI API: {e}"
 
 def install_dependencies(requirements_file, venv_python): 
     """Install dependencies using pip in the venv."""
