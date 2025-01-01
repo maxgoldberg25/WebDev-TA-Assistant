@@ -12,7 +12,7 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
-def setup_venv(venv_path):
+def setup_venv(venv_path): 
     """Create and activate a virtual environment if not already existing."""
     if not os.path.exists(venv_path):
         print("Creating virtual environment...")
@@ -25,7 +25,7 @@ def setup_venv(venv_path):
         raise FileNotFoundError("Activation script not found. Check the venv setup.")
     return activate_script
 
-def execute_readme(readme_path, openai_api_key):
+def execute_readme(readme_path, openai_api_key): 
     """
     Executes steps from a README.txt file and provides assistance via OpenAI API.
     
@@ -79,7 +79,7 @@ def get_openai_guidance(instruction, api_key):
     except Exception as e:
         return f"Error communicating with OpenAI API: {e}"
 
-def install_dependencies(requirements_file, venv_python):
+def install_dependencies(requirements_file, venv_python): 
     """Install dependencies using pip in the venv."""
     # Check for both uppercase and lowercase variations
     if not os.path.exists(requirements_file):
@@ -99,6 +99,9 @@ def run_files_with_venv(project_dir, venv_python):
     flask_files = [f for f in os.listdir(project_dir) if os.path.isdir(os.path.join(project_dir, f)) or f.endswith(".py")]
 
     for flask_file in flask_files:
+        if (flask_file != "run.py"):
+            print(f"Skipping file: {flask_file}")
+            continue # Skip files that are not app.py
         file_path = os.path.join(project_dir, flask_file)
 
         if os.path.isdir(file_path):
@@ -136,13 +139,13 @@ def find_readme(project_dir):
     return None
 
 if __name__ == "__main__":
-    project_dir = input("Enter the path to the project directory: ").strip()
-    venv_dir = os.path.join(project_dir, "venv")
-    requirements_path = os.path.join(project_dir, "Requirements.txt")
-    print(f"Project directory: {project_dir}")
-    venv_python = os.path.join(venv_dir, "Scripts", "python") if os.name == "nt" else os.path.join(venv_dir, "bin", "python")
+    project_dir = input("Enter the path to the project directory: ").strip() 
+    venv_dir = os.path.join(project_dir, "venv") # Virtual environment directory
+    requirements_path = os.path.join(project_dir, "Requirements.txt") # Requirements file path
+    print(f"Project directory: {project_dir}") # Print the project directory
+    venv_python = os.path.join(venv_dir, "Scripts", "python") if os.name == "nt" else os.path.join(venv_dir, "bin", "python") # Virtual environment Python path
 
-    if os.path.isdir(project_dir):
+    if os.path.isdir(project_dir): # Check if the project directory exists
         try:
             setup_venv(venv_dir)
             install_dependencies(requirements_path, venv_python)
@@ -151,13 +154,13 @@ if __name__ == "__main__":
             if readme_path:
                 print(f"Found README file at: {readme_path}")
                 openai_api_key = OPENAI_API_KEY
-                execute_readme(readme_path, openai_api_key)
+                #execute_readme(readme_path, openai_api_key)
             else:
                 print("No README file found in the project directory.")
 
             run_files_with_venv(project_dir, venv_python)
         except Exception as e:
             print(f"Error: {e}")
-    else:
+    else: # If the specified path is not a valid directory
         print("The specified path is not a valid directory.")
 
