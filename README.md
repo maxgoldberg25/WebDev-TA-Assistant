@@ -65,7 +65,7 @@ Opens all `.html` files in a directory for manual grading, pausing after each fi
 **Steps:**
 1. Run the script:
    ```bash
-   python TA_Assistant.py
+   python3 TA_Assistant.py
    ```
 2. When prompted, enter the directory path containing your `.html` files.
 3. The script will open each file in your default web browser.
@@ -83,7 +83,7 @@ Handles virtual environment creation, dependency installation, and running Flask
    ```
 2. Run the script:
    ```bash
-   python TA_Assistant_server.py
+   python3 TA_Assistant_server.py
    ```
 3. Follow the interactive prompts:
    - Enter the project directory where the Flask app is located.
