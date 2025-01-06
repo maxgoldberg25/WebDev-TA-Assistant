@@ -10,8 +10,7 @@ This repository contains two Python scripts designed to assist Teaching Assistan
    - [Script 1: TA_Assistant.py](#script-1-ta_assistantpy)
    - [Script 2: TA_Assistant_server.py](#script-2-ta_assistant_serverpy)
 5. [Environment Variables](#environment-variables)
-6. [Contributing](#contributing)
-7. [License](#license)
+
 
 ---
 
