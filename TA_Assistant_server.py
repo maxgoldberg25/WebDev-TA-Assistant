@@ -99,7 +99,7 @@ def run_files_with_venv(project_dir, venv_python):
     flask_files = [f for f in os.listdir(project_dir) if os.path.isdir(os.path.join(project_dir, f)) or f.endswith(".py")]
 
     for flask_file in flask_files:
-        if (flask_file != "run.py"):
+        if (flask_file != "run.py") and (flask_file != "app.py"):
             print(f"Skipping file: {flask_file}")
             continue # Skip files that are not app.py
         file_path = os.path.join(project_dir, flask_file)
@@ -149,18 +149,19 @@ if __name__ == "__main__":
         try:
             setup_venv(venv_dir)
             install_dependencies(requirements_path, venv_python)
-
+            
             readme_path = find_readme(project_dir)
-            if readme_path:
+            if readme_path: 
                 print(f"Found README file at: {readme_path}")
                 openai_api_key = OPENAI_API_KEY
                 #execute_readme(readme_path, openai_api_key)
-            else:
+            else: # If no README file is found
                 print("No README file found in the project directory.")
 
             run_files_with_venv(project_dir, venv_python)
         except Exception as e:
             print(f"Error: {e}")
     else: # If the specified path is not a valid directory
+        
         print("The specified path is not a valid directory.")
 
